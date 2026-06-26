@@ -118,6 +118,7 @@ pub fn step_config(kind: StepKind, variant: &str, niss: NissSwitchType) -> StepC
         step_limit: None,
         quality: 0,
         niss: Some(niss),
+        excluded: Default::default(),
         params: Default::default(),
     }
 }
@@ -317,6 +318,7 @@ pub fn parse_single_step(step_str: &str) -> Result<StepConfig, String> {
             .transpose()?,
         quality: 0,
         niss: niss_type,
+        excluded: Default::default(),
         params: Default::default(),
     };
     Ok(step)

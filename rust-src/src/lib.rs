@@ -24,7 +24,7 @@ use crate::Visibility::Any;
 use cubelib::algs::Algorithm as LibAlgorithm;
 use cubelib::cube::turn::{ApplyAlgorithm, Direction, Invertible, InvertibleMut};
 use cubelib::cube::{Corner, Cube333, Turn333};
-use cubelib::defs::StepKind;
+use cubelib::defs::{StepKind, StepVariant};
 
 #[pyclass]
 struct Solution {
@@ -406,17 +406,19 @@ impl StepInfo {
             let mut py_steps = vec![];
             let mut py_algs = vec![];
             for step in sol.get_steps() {
-                let variant = match step.kind {
-                    StepKind::EO | StepKind::HTR | StepKind::FR => &step.variant,
-                    StepKind::DR => &step.variant[0..2],
-                    _ => "",
+                let step_kind = StepKind::from(step.variant);
+                let variant = match step.variant {
+                    StepVariant::EO(axis) => axis.name().to_string(),
+                    StepVariant::DR { dr_axis, .. } => dr_axis.name().to_string(),
+                    StepVariant::HTR(axis) | StepVariant::FR(axis) | StepVariant::FRLS(axis) => axis.name().to_string(),
+                    _ => "".to_string(),
                 };
-                let variant = match variant {
+                let variant = match variant.as_str() {
                     "lr" => "rl".to_string(),
-                    other => other.to_string(),
+                    _ => variant,
                 };
                 py_steps.push(StepInfo {
-                    kind: step.kind.to_string(),
+                    kind: step_kind.to_string(),
                     variant: variant,
                 });
                 py_algs.push(Algorithm(step.alg.clone()));
