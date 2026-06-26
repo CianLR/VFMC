@@ -1255,7 +1255,10 @@ class Commands:
             previous = PartialSolution(
                 kind=kind, variant=variant, alg=Algorithm(alg), previous=previous
             )
-            self.attempt.save_solution(previous, "")
+            cube = Cube(self.attempt.scramble)
+            cube.apply(previous.full_alg())
+            case_name = previous.step_info.case_name(cube)
+            self.attempt.save_solution(previous, case_name)
 
     def reset(self):
         """Reset the cube to the beginning of the current step"""

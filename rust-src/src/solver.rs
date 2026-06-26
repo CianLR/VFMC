@@ -46,22 +46,22 @@ pub fn group(active_step: StepKind, steps_to_solve: &Vec<StepConfig>) -> Result<
         return Err("No steps provided".to_string());
     }
     match (active_step.clone(), &steps_to_solve[0].kind) {
-        (StepKind::Other(s), StepKind::DR | StepKind::HTR | StepKind::FR | StepKind::FIN)
+        (StepKind::Other(s), StepKind::DR | StepKind::HTR | StepKind::FR | StepKind::FIN | StepKind::FINLS)
             if s == "" =>
         {
             return Err(format!("Cannot jump to {}", &steps_to_solve[0].kind))
         }
-        (StepKind::EO, StepKind::DR | StepKind::HTR | StepKind::FR | StepKind::FIN)
-        | (StepKind::DR, StepKind::HTR | StepKind::FR | StepKind::FIN) => {
+        (StepKind::EO, StepKind::DR | StepKind::HTR | StepKind::FR | StepKind::FIN | StepKind::FINLS)
+        | (StepKind::DR, StepKind::HTR | StepKind::FR | StepKind::FIN | StepKind::FINLS) => {
             return Err(format!(
                 "Must solve {} before {}",
                 active_step, &steps_to_solve[0].kind
             ))
         }
-        (StepKind::DR | StepKind::HTR | StepKind::FR | StepKind::FIN, StepKind::EO)
-        | (StepKind::HTR | StepKind::FR | StepKind::FIN, StepKind::DR)
-        | (StepKind::FR | StepKind::FIN, StepKind::HTR)
-        | (StepKind::FIN, StepKind::FR) => {
+        (StepKind::DR | StepKind::HTR | StepKind::FR | StepKind::FIN | StepKind::FINLS, StepKind::EO)
+        | (StepKind::HTR | StepKind::FR | StepKind::FIN | StepKind::FINLS, StepKind::DR)
+        | (StepKind::FR | StepKind::FIN | StepKind::FINLS, StepKind::HTR)
+        | (StepKind::FIN | StepKind::FINLS, StepKind::FR) => {
             return Err(format!("Already in {}", &steps_to_solve[0].kind))
         }
         (StepKind::Other(s), _) if s == "insertions" => {

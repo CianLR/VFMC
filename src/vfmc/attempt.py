@@ -389,7 +389,17 @@ class Attempt:
                 break
         return solutions
 
+    def _dr_axis(self) -> Optional[str]:
+        for step in self.solution.substeps():
+            if step.kind == "dr" and step.variant in ("ud", "rl", "fb"):
+                return "lr" if step.variant == "rl" else step.variant
+        return None
+
     def mallard(self, steps_str, num_solutions: int):
+        dr_axis = self._dr_axis()
+        is_finls = steps_str.strip().upper() == "FINLS"
+        if is_finls and dr_axis:
+            steps_str = f"FINLS[{dr_axis}]"
         core_solutions = self.solution.step_info.solve_steps(
             self.cube, num_solutions, steps_str
         )
@@ -409,6 +419,8 @@ class Attempt:
                     previous=previous,
                 )
             solutions.append(previous)
+            if len(solutions) >= num_solutions:
+                break
         return solutions
 
     def save_current_solution(self, allow_advance=True) -> Optional[PartialSolution]:

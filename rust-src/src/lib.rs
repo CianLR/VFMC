@@ -14,7 +14,7 @@ use pyo3::exceptions::PyValueError;
 
 use crate::dr::{DRFB, DRRL, DRUD};
 use crate::eo::{EOFB, EORL, EOUD};
-use crate::finish::Finish;
+use crate::finish::{Finish, FinishLeaveSlice};
 use crate::fr::{FRFB, FRRL, FRUD};
 use crate::htr::{HTRFB, HTRRL, HTRUD};
 use crate::insertions::Insertions;
@@ -417,8 +417,12 @@ impl StepInfo {
                     "lr" => "rl".to_string(),
                     _ => variant,
                 };
+                let kind = match step_kind {
+                    StepKind::FINLS => StepKind::FIN,
+                    k => k,
+                };
                 py_steps.push(StepInfo {
-                    kind: step_kind.to_string(),
+                    kind: kind.to_string(),
                     variant: variant,
                 });
                 py_algs.push(Algorithm(step.alg.clone()));
@@ -491,6 +495,7 @@ impl StepBuilder {
                 _ => Err(format!("Unknown variant '{}' for dr", variant).into()),
             },
             "finish" => Ok(Box::new(Finish)),
+            "finls" => Ok(Box::new(FinishLeaveSlice)),
             "insertions" => Ok(Box::new(Insertions)),
             "" => Ok(Box::new(SCRAMBLED)),
             _ => Err(format!("Unknown step '{}'", kind).into()),
