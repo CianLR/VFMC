@@ -280,6 +280,16 @@ class AppWindow(QMainWindow):
 
         solve_button.clicked.connect(solve)
 
+        solve_ls_button = QPushButton("solve ls")
+
+        @catch_errors
+        def solve_ls(*args, **kwargs):
+            self.commands.execute(f'mallard("FINLS",{solve_count.currentIndex()+1})')
+
+        solve_ls_button.clicked.connect(solve_ls)
+        solve_ls_button.setVisible(False)
+        self.solve_ls_button = solve_ls_button
+
         gui_widget = self._empty_container(QHBoxLayout())
 
         w = self._empty_container(QVBoxLayout())
@@ -299,7 +309,10 @@ class AppWindow(QMainWindow):
         gui_widget.layout().addWidget(w)
 
         gui_widget.layout().addWidget(QWidget(), 1)
-        gui_widget.layout().addWidget(solve_button)
+        w = self._empty_container(QVBoxLayout())
+        w.layout().addWidget(solve_button)
+        w.layout().addWidget(solve_ls_button)
+        gui_widget.layout().addWidget(w)
         gui_widget.layout().addWidget(solve_count)
 
         w = self._empty_container(QVBoxLayout())
@@ -344,6 +357,9 @@ class AppWindow(QMainWindow):
             step_selector.blockSignals(True)
             step_selector.setCurrentText(current_step)
             step_selector.blockSignals(False)
+            self.solve_ls_button.setVisible(
+                self.attempt.solution.kind == "finish"
+            )
 
         self.attempt.add_solution_attribute_listener(refresh)
 
