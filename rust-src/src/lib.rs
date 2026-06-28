@@ -495,7 +495,7 @@ impl StepBuilder {
                 _ => Err(format!("Unknown variant '{}' for dr", variant).into()),
             },
             "finish" => Ok(Box::new(Finish)),
-            "finls" => Ok(Box::new(FinishLeaveSlice)),
+            "finls" => Ok(Box::new(FinishLeaveSlice::new(variant))),
             "insertions" => Ok(Box::new(Insertions)),
             "" => Ok(Box::new(SCRAMBLED)),
             _ => Err(format!("Unknown step '{}'", kind).into()),

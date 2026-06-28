@@ -1,13 +1,39 @@
 use crate::solver::{solve_step, step_config};
 use crate::Visibility::{Any, BadFace, BadPiece};
-use crate::{Algorithm, Solvable, CORNER_OPPOSITE_E_SLICE, EDGE_OPPOSITE_E_SLICE};
+use crate::{
+    Algorithm, Solvable, CORNER_OPPOSITE_E_SLICE, CORNER_OPPOSITE_M_SLICE,
+    CORNER_OPPOSITE_S_SLICE, EDGE_OPPOSITE_E_SLICE, EDGE_OPPOSITE_M_SLICE,
+    EDGE_OPPOSITE_S_SLICE,
+};
 use cubelib::cube::Cube333;
 use cubelib::defs::{NissSwitchType, StepKind};
 use cubelib::steps::coord::Coord;
 use cubelib::steps::finish::coords::HTRFinishCoord;
 use pyo3::PyResult;
 
-pub struct FinishLeaveSlice;
+pub struct FinishLeaveSlice {
+    pub axis: String,
+    edge_opposite: &'static [u8; 12],
+    corner_opposite: &'static [u8; 8],
+}
+
+impl FinishLeaveSlice {
+    pub fn new(axis: &str) -> Self {
+        let axis = if axis == "rl" { "lr" } else { axis };
+        let (edge_opposite, corner_opposite) = match axis {
+            "ud" => (&EDGE_OPPOSITE_E_SLICE, &CORNER_OPPOSITE_E_SLICE),
+            "fb" => (&EDGE_OPPOSITE_S_SLICE, &CORNER_OPPOSITE_S_SLICE),
+            "lr" => (&EDGE_OPPOSITE_M_SLICE, &CORNER_OPPOSITE_M_SLICE),
+            _ => (&EDGE_OPPOSITE_E_SLICE, &CORNER_OPPOSITE_E_SLICE),
+        };
+        FinishLeaveSlice {
+            axis: axis.to_string(),
+            edge_opposite,
+            corner_opposite,
+        }
+    }
+}
+
 impl Solvable for FinishLeaveSlice {
     fn is_solved(&self, cube: &Cube333) -> bool {
         let edges = cube.edges.get_edges();
@@ -15,11 +41,11 @@ impl Solvable for FinishLeaveSlice {
         let edges_ok = edges
             .iter()
             .enumerate()
-            .all(|(i, e)| e.id as usize == i || e.id == EDGE_OPPOSITE_E_SLICE[i]);
+            .all(|(i, e)| e.id as usize == i || e.id == self.edge_opposite[i]);
         let corners_ok = corners
             .iter()
             .enumerate()
-            .all(|(i, c)| c.id as usize == i || c.id == CORNER_OPPOSITE_E_SLICE[i]);
+            .all(|(i, c)| c.id as usize == i || c.id == self.corner_opposite[i]);
         edges_ok && corners_ok
     }
 
@@ -33,12 +59,12 @@ impl Solvable for FinishLeaveSlice {
         let bad_edge_count = edges
             .iter()
             .enumerate()
-            .filter(|(i, e)| e.id as usize != *i && e.id != EDGE_OPPOSITE_E_SLICE[*i])
+            .filter(|(i, e)| e.id as usize != *i && e.id != self.edge_opposite[*i])
             .count();
         let bad_corner_count = corners
             .iter()
             .enumerate()
-            .filter(|(i, c)| c.id as usize != *i && c.id != CORNER_OPPOSITE_E_SLICE[*i])
+            .filter(|(i, c)| c.id as usize != *i && c.id != self.corner_opposite[*i])
             .count();
         let c_string = if bad_corner_count > 0 {
             format!("{}c", bad_corner_count)
@@ -56,7 +82,7 @@ impl Solvable for FinishLeaveSlice {
     fn edge_visibility(&self, cube: &Cube333, pos: usize, _facelet: u8) -> u8 {
         let mut v = Any as u8;
         let e = cube.edges.get_edges()[pos];
-        if e.id as usize != pos && e.id != EDGE_OPPOSITE_E_SLICE[pos] {
+        if e.id as usize != pos && e.id != self.edge_opposite[pos] {
             v |= BadPiece as u8 | BadFace as u8;
         }
         v
@@ -65,13 +91,13 @@ impl Solvable for FinishLeaveSlice {
     fn corner_visibility(&self, cube: &Cube333, pos: usize, _facelet: u8) -> u8 {
         let mut v = Any as u8;
         let c = cube.corners.get_corners()[pos];
-        if c.id as usize != pos && c.id != CORNER_OPPOSITE_E_SLICE[pos] {
+        if c.id as usize != pos && c.id != self.corner_opposite[pos] {
             v |= BadPiece as u8 | BadFace as u8;
         }
         v
     }
     fn solve(&self, cube: &Cube333, count: usize) -> PyResult<Vec<Algorithm>> {
-        let mut cfg = step_config(StepKind::FINLS, "ud", NissSwitchType::Never);
+        let mut cfg = step_config(StepKind::FINLS, &self.axis, NissSwitchType::Never);
         cfg.max = Some(20);
         solve_step(cube, cfg, count, false)
     }
